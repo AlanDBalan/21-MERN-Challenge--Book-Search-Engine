@@ -24,8 +24,6 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use(routes);
 
-const PORT = process.env.PORT || 3001;
-
 db.once('open', () => {
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
