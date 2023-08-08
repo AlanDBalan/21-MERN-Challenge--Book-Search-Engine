@@ -1,14 +1,16 @@
-// see SignupForm.js for comments
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-
-import { loginUser } from '../utils/API';
+import { useMutation } from '@apollo/client'; // Step 1: Import the useMutation hook
+import { LOGIN_USER } from '../utils/mutations'; // Step 2: Import the LOGIN_USER mutation
 import Auth from '../utils/auth';
 
 const LoginForm = () => {
   const [userFormData, setUserFormData] = useState({ email: '', password: '' });
-  const [validated] = useState(false);
+  const [validated, setValidated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+
+  // Step 3: Use the useMutation hook to create a mutation function
+  const [loginUser, { error }] = useMutation(LOGIN_USER);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -16,43 +18,50 @@ const LoginForm = () => {
   };
 
   const handleFormSubmit = async (event) => {
-    event.preventDefault();
+  event.preventDefault();
 
-    // check if form has everything (as per react-bootstrap docs)
-    const form = event.currentTarget;
-    if (form.checkValidity() === false) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-
+  const form = event.currentTarget;
+  if (form.checkValidity() === false) {
+    event.stopPropagation();
+  } else {
     try {
-      const response = await loginUser(userFormData);
+      const { data, errors } = await loginUser({
+        variables: { ...userFormData },
+      });
 
-      if (!response.ok) {
-        throw new Error('something went wrong!');
+      // Log the response from the server
+      console.log('Response data:', data);
+
+      // Check for any errors returned from the server
+      if (errors && errors.length > 0) {
+        console.error('GraphQL errors:', errors);
+      } else {
+        const token = data?.login?.token;
+        if (token) {
+          Auth.login(token);
+        } else {
+          console.error('Token not found in the login response.');
+        }
       }
-
-      const { token, user } = await response.json();
-      console.log(user);
-      Auth.login(token);
     } catch (err) {
-      console.error(err);
+      console.error('Error:', err);
       setShowAlert(true);
     }
+  }
 
-    setUserFormData({
-      username: '',
-      email: '',
-      password: '',
-    });
-  };
+  setValidated(true);
+};
 
   return (
     <>
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
-        <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant='danger'>
-          Something went wrong with your login credentials!
-        </Alert>
+        {/* Show alert if there is an error */}
+        {error && (
+          <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant='danger'>
+            Something went wrong with your login credentials!
+          </Alert>
+        )}
+
         <Form.Group className='mb-3'>
           <Form.Label htmlFor='email'>Email</Form.Label>
           <Form.Control

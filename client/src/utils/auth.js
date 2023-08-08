@@ -13,7 +13,7 @@ class AuthService {
     // Checks if there is a saved token and it's still valid
     const token = this.getToken();
     return !!token && !this.isTokenExpired(token); // handwaiving here
-  }
+  }a
 
   // check if token is expired
   isTokenExpired(token) {
@@ -44,6 +44,19 @@ class AuthService {
     // this will reload the page and reset the state of the application
     window.location.assign('/');
   }
+  
+  setToken(token) {
+    // Save the user token to localStorage or your preferred storage mechanism
+    // For example, you can use sessionStorage or store it in memory as per your app's requirements
+    localStorage.setItem('id_token', token);
+  }
+
+  removeToken() {
+    // Clear the user token from localStorage or your preferred storage mechanism
+    // For example, you can use sessionStorage or remove it from memory as per your app's requirements
+    localStorage.removeItem('id_token');
+  }
 }
+
 
 export default new AuthService();
